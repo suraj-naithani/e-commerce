@@ -4,12 +4,15 @@ import { useDispatch, useSelector } from "react-redux";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import "./App.css";
 import ProtectRoute from "./auth/ProtectRoute";
+import DashboardLayout from "./layout/DashboardLayout";
 import MainLayout from "./layout/MainLayout";
 import ProtectedLayout from "./layout/ProtectedLayout";
+import SingleProduct from "./page/SingleProduct";
+import { useGetCartQuery } from "./redux/api/cartApi";
 import { useFetchUserProfileQuery } from "./redux/api/profileApi";
 import { userExists, userNotExist } from "./redux/reducer/authReducer";
+import { setCart } from "./redux/reducer/cartReducer";
 
-// Lazy loaded pages
 const Home = lazy(() => import("./page/Home"));
 const Product = lazy(() => import("./page/Product"));
 const Cart = lazy(() => import("./page/Cart"));
@@ -18,6 +21,23 @@ const Profile = lazy(() => import("./page/Profile"));
 const Setting = lazy(() => import("./page/Setting"));
 const Signup = lazy(() => import("./page/Signup"));
 const Signin = lazy(() => import("./page/Signin"));
+const DashboardHome = lazy(() => import("./page/dashboard/DashboardHome"));
+const DashboardProducts = lazy(() =>
+  import("./page/dashboard/DashboardProducts")
+);
+const DashboardOrders = lazy(() => import("./page/dashboard/DashboardOrders"));
+const DashboardSetting = lazy(() =>
+  import("./page/dashboard/DashboardSetting")
+);
+const DashboardProfile = lazy(() =>
+  import("./page/dashboard/DashboardProfile")
+);
+
+const DashboardReview = lazy(() => import("./page/dashboard/DashboardReview"));
+
+const Shipping = lazy(() => import("./page/Shipping"));
+const Checkout = lazy(() => import("./page/Checkout"));
+const Orders = lazy(() => import("./page/Orders"));
 
 const App = () => {
   const dispatch = useDispatch();
@@ -26,13 +46,21 @@ const App = () => {
     skip: !!user,
   });
 
+  const { data: cartData } = useGetCartQuery();
+
   useEffect(() => {
     if (data) {
       dispatch(userExists(data.user));
     } else if (error) {
       dispatch(userNotExist());
     }
-  }, [data, error, dispatch]);
+  }, [user, data, error, dispatch]);
+
+  useEffect(() => {
+    if (cartData) {
+      dispatch(setCart(cartData));
+    }
+  }, [user, cartData, dispatch]);
 
   return (
     <BrowserRouter>
@@ -55,6 +83,17 @@ const App = () => {
               </MainLayout>
             }
           />
+
+          <Route path="/product">
+            <Route
+              path=":id"
+              element={
+                <MainLayout>
+                  <SingleProduct />
+                </MainLayout>
+              }
+            />
+          </Route>
 
           {/* Protected Routes */}
           <Route
@@ -81,14 +120,7 @@ const App = () => {
               </ProtectedLayout>
             }
           />
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedLayout user={user}>
-                <Home />
-              </ProtectedLayout>
-            }
-          />
+
           <Route
             path="/setting"
             element={
@@ -115,6 +147,49 @@ const App = () => {
               </ProtectRoute>
             }
           />
+
+          <Route>
+            <Route
+              path="/shipping"
+              element={
+                <ProtectedLayout user={user}>
+                  <Shipping />
+                </ProtectedLayout>
+              }
+            />
+            <Route
+              path="/orders"
+              element={
+                <ProtectedLayout user={user}>
+                  <Orders />
+                </ProtectedLayout> 
+              }
+            />
+            <Route
+              path="/pay"
+              element={
+                <ProtectedLayout user={user}>
+                  <Checkout />
+                </ProtectedLayout>
+              }
+            />
+          </Route>
+
+          <Route
+            element={
+              <ProtectRoute user={user}>
+                <DashboardLayout />
+              </ProtectRoute>
+            }
+          >
+            <Route path="/dashboard/home" element={<DashboardHome />} />
+            <Route path="/dashboard/products" element={<DashboardProducts />} />
+            <Route path="/dashboard/allOrder" element={<DashboardOrders />} />
+            <Route path="/dashboard/stats" element={<DashboardHome />} />
+            <Route path="/dashboard/profile" element={<DashboardProfile />} />
+            <Route path="/dashboard/setting" element={<DashboardSetting />} />
+            <Route path="/dashboard/reviews" element={<DashboardReview />} />
+          </Route>
         </Routes>
       </Suspense>
 

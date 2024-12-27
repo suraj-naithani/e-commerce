@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { FaAngleLeft, FaAngleRight } from "react-icons/fa6";
 import { GoArrowRight } from "react-icons/go";
 import { categories } from "../constants/data";
+import {Link} from "react-router-dom";
 
 const ImageSlider = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -13,19 +13,9 @@ const ImageSlider = () => {
     return () => clearInterval(timer);
   }, []);
 
-  const nextSlide = () => {
-    setCurrentSlide((prevSlide) => (prevSlide + 1) % categories.length);
-  };
-
-  const prevSlide = () => {
-    setCurrentSlide(
-      (prevSlide) => (prevSlide - 1 + categories.length) % categories.length
-    );
-  };
-
   return (
     <section className="relative bg-gray-100 overflow-hidden">
-      <div className="relative h-[60vh] md:h-[70vh]">
+      <div className="relative h-[60vh] md:h-[70vh] lg:h-[550px]">
         {categories.map((slide, index) => (
           <div
             key={index}
@@ -44,37 +34,14 @@ const ImageSlider = () => {
                 <h1 className="text-4xl md:text-6xl font-bold mb-4">
                   {slide.title}
                 </h1>
-                <p className="text-xl md:text-2xl mb-8">{slide.description}</p>
-                <button className="bg-white text-black px-6 py-3 rounded-full hover:bg-gray-100 transition duration-300 flex items-center gap-1.5">
+                <p className=" mb-8">{slide.description}</p>
+                <Link to='/product' className="bg-white text-black px-6 py-3 rounded-full hover:bg-gray-100 transition duration-300 w-fit flex items-center gap-1.5">
                   Shop {slide.category}
                   <GoArrowRight />
-                </button>
+                </Link>
               </div>
             </div>
           </div>
-        ))}
-      </div>
-      <button
-        onClick={prevSlide}
-        className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-50 rounded-full p-2 hover:bg-opacity-75 transition duration-300"
-      >
-        <FaAngleLeft size={24} />
-      </button>
-      <button
-        onClick={nextSlide}
-        className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-50 rounded-full p-2 hover:bg-opacity-75 transition duration-300"
-      >
-        <FaAngleRight size={24} />
-      </button>
-      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
-        {categories.map((_, index) => (
-          <button
-            key={index}
-            onClick={() => setCurrentSlide(index)}
-            className={`w-3 h-3 rounded-full ${
-              index === currentSlide ? "bg-white" : "bg-white bg-opacity-50"
-            }`}
-          />
         ))}
       </div>
     </section>

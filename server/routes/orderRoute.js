@@ -1,6 +1,7 @@
 import express from "express";
 import {
   allOrders,
+  createPaymentIntent,
   deleteOrder,
   getSingleOrder,
   myOrders,
@@ -18,6 +19,8 @@ app.post("/new", newOrder);
 app.get("/myOrders", myOrders);
 
 app.get("/allOrdered", isSeller, allOrders);
+
+app.post("/create", createPaymentIntent);
 
 app
   .route("/:id")

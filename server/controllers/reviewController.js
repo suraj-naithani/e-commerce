@@ -5,14 +5,14 @@ import { Product } from "../model/product.js";
 
 const createReview = async (req, res) => {
   try {
-    const { productId, rating, comment } = req.body;
-    const userId = new mongoose.Types.ObjectId(req.user);
-    const existingReview = await Review.findOne({ productId, userId });
+    const { rating, comment } = req.body;
+    const userId = req.user;
+    const productId = req.params.userId;
 
-    if (existingReview) {
+    if (userId === productId) {
       return res.status(400).json({
         success: false,
-        message: "You have already reviewed this product.",
+        message: "You cannot review your own product",
       });
     }
 
@@ -30,14 +30,12 @@ const createReview = async (req, res) => {
       });
     }
 
-    const review = new Review({
+    const review = await Review.create({
       productId,
       userId,
       rating,
       comment,
     });
-
-    await review.save();
 
     return res.status(201).json({
       success: true,
@@ -45,7 +43,7 @@ const createReview = async (req, res) => {
       review,
     });
   } catch (error) {
-    console.error(error);
+    console.log(error);
     return res.status(500).json({
       success: false,
       message: "Error adding review",
@@ -57,19 +55,86 @@ const createReview = async (req, res) => {
 const getProductReviews = async (req, res) => {
   try {
     const { productId } = req.params;
+    const productObjectId = new mongoose.Types.ObjectId(productId);
 
-    const reviews = await Review.find({ productId }).populate("userId", "name");
+    const [reviews, totalReviews, totalRatings, totalStarsGroup] =
+      await Promise.all([
+        Review.find({ productId: productObjectId })
+          .populate("userId", "name -_id")
+          .sort({ createdAt: -1 }),
+
+        Review.countDocuments({ productId: productObjectId }),
+
+        Review.aggregate([
+          { $match: { productId: productObjectId } },
+          { $group: { _id: null, totalRating: { $avg: "$rating" } } },
+        ]),
+
+        Review.aggregate([
+          { $match: { productId: productObjectId } },
+          { $group: { _id: "$rating", count: { $sum: 1 } } },
+          { $sort: { _id: -1 } },
+        ]),
+      ]);
+
+    const totalRating = totalRatings[0]?.totalRating;
+
+    const formattedTotalRating =
+      totalRating !== null && totalRating !== undefined
+        ? totalRating.toFixed(2)
+        : "0.00";
+
+    const starGroups = [5, 4, 3, 2, 1].map((star) => {
+      const found = totalStarsGroup.find((group) => group._id === star);
+      return { star, count: found ? found.count : 0 };
+    });
+
+    const stats = {
+      reviews,
+      totalReviews,
+      totalRatings: formattedTotalRating,
+      totalStarsGroup: starGroups,
+    };
+
+    return res.status(200).json({
+      success: true,
+      stats,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Error fetching reviews",
+      error,
+    });
+  }
+};
+
+const getMyProductReview = async (req, res) => {
+  try {
+    const sellerId = req.user;
+
+    const products = await Product.find({ seller: sellerId });
+
+    if (!products || products.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No products found for this seller",
+      });
+    }
+
+    const productIds = products.map((product) => product._id);
+    const reviews = await Review.find({
+      productId: { $in: productIds },
+    }).populate("userId", "name");
 
     return res.status(200).json({
       success: true,
       reviews,
     });
   } catch (error) {
-    console.error(error);
     return res.status(500).json({
       success: false,
       message: "Error fetching reviews",
-      error,
     });
   }
 };
@@ -113,4 +178,4 @@ const deleteReview = async (req, res) => {
   }
 };
 
-export { createReview, deleteReview, getProductReviews };
+export { createReview, deleteReview, getProductReviews, getMyProductReview };

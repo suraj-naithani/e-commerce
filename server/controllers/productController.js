@@ -38,7 +38,7 @@ const searchProduct = async (req, res) => {
   try {
     const { product } = req.query;
 
-    if (!product) {
+    if (!product || product.trim() === "") {
       return res.status(400).json({
         success: false,
         message: "product name is required for search",
@@ -49,8 +49,16 @@ const searchProduct = async (req, res) => {
       name: { $regex: new RegExp(product, "i") },
     });
 
+    if (!products.length) {
+      return res.status(404).json({
+        success: false,
+        message: "No products found for the given search term",
+      });
+    }
+
     return res.status(200).json({ success: true, products });
   } catch (error) {
+    console.log("Error in search API", error);
     res.status(500).json({ success: false, message: "Error in search API" });
   }
 };

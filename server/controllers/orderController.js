@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import { Order } from "../model/order.js";
 import { User } from "../model/user.js";
 import { reduceStock, sendEmail } from "../utils/features.js";
+import { stripe } from "../index.js";
 
 const newOrder = async (req, res) => {
   try {
@@ -15,6 +16,13 @@ const newOrder = async (req, res) => {
       productId,
       sellerId,
     } = req.body;
+
+    if (req.user === sellerId) {
+      return res.status(403).json({
+        success: false,
+        message: "You cannot place order for your own product",
+      });
+    }
 
     if (!shippingInfo || !total || !orderItems) {
       return res.status(400).json({
@@ -95,7 +103,7 @@ const allOrders = async (req, res) => {
   try {
     const orders = await Order.find({
       sellerId: req.user,
-    });
+    }).populate("user", "name email phone address");
 
     return res.status(200).json({ success: true, orders });
   } catch (error) {
@@ -220,6 +228,31 @@ const deleteOrder = async (req, res) => {
   }
 };
 
+const createPaymentIntent = async (req, res, next) => {
+  try {
+    const { amount } = req.body;
+
+    if (!amount) {
+      return res
+        .status(400)
+        .json({ success: true, message: "Please enter amount" });
+    }
+
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: Number(amount) * 100,
+      currency: "inr",
+    });
+
+    return res
+      .status(201)
+      .json({ success: true, clientSecret: paymentIntent.client_secret });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ success: false, message: "internal server error" });
+  }
+};
+
 export {
   newOrder,
   myOrders,
@@ -227,4 +260,5 @@ export {
   getSingleOrder,
   processOrder,
   deleteOrder,
+  createPaymentIntent,
 };

@@ -7,10 +7,10 @@ import {
 
 const app = express.Router();
 
-app.get("/", products);
-
-app.get("/:id", product);
+app.get("/product", products);
 
 app.get("/searchProduct", searchProduct);
+
+app.get("/:id", product);
 
 export default app;

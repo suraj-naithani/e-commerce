@@ -26,8 +26,19 @@ export const profileApi = createApi({
       }),
       invalidatesTags: ["users"],
     }),
+
+    deleteUser: builder.mutation({
+      query: () => ({
+        url: `deleteProfile`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["users"],
+    }),
   }),
 });
 
-export const { useFetchUserProfileQuery, useUpdateUserProfileMutation } =
-  profileApi;
+export const {
+  useFetchUserProfileQuery,
+  useUpdateUserProfileMutation,
+  useDeleteUserMutation,
+} = profileApi;

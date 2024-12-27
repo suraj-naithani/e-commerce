@@ -22,6 +22,16 @@ const schema = new Schema(
       required: true,
       min: [0, "Price cannot be negative"],
     },
+    originalPrice: {
+      type: Number,
+      required: true,
+      min: [0, "Price cannot be negative"],
+    },
+    discountPercentage: {
+      type: Number,
+      required: true,
+      min: [0, "Price cannot be negative"],
+    },
     category: {
       type: String,
       required: true,
@@ -49,6 +59,11 @@ const schema = new Schema(
         type: String,
         required: true,
       },
+    },
+  shippingFee: {
+      type: Number,
+      required: true,
+      min: [0, "Price cannot be negative"],
     },
     hitCount: {
       type: Number,
