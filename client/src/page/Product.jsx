@@ -20,13 +20,12 @@ const Product = () => {
     return [Math.min(...prices), Math.max(...prices)];
   }, [data]);
 
-   useEffect(() => {
-     if (data) {
-       setPriceRange([minPrice, maxPrice]);
-     }
-   }, [data, minPrice, maxPrice]);
+  useEffect(() => {
+    if (data) {
+      setPriceRange([minPrice, maxPrice]);
+    }
+  }, [data, minPrice, maxPrice]);
 
-  
   const filteredProducts = useMemo(() => {
     return data?.products?.filter(
       (product) =>

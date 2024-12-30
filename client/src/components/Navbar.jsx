@@ -106,7 +106,7 @@ const Navbar = () => {
                   {isLoading ? (
                     <div className="p-4 text-gray-500">Loading...</div>
                   ) : searchResults?.products.length > 0 && !isError ? (
-                    searchResults?.products?.map((product) => (
+                    searchResults?.products?.slice(0, 6).map((product) => (
                       <div
                         key={product._id}
                         className="flex items-center p-4 border-b border-gray-200 hover:bg-gray-50 cursor-pointer transition duration-200 ease-in-out rounded-md"
@@ -114,7 +114,7 @@ const Navbar = () => {
                       >
                         <div className="flex-1">
                           <p className="text-gray-800 truncate">
-                            {product.name}
+                            {product.name.substr(0, 45)}
                           </p>
                         </div>
                         <div className="ml-4 text-sm text-gray-500">

@@ -16,6 +16,7 @@ import profileRoute from "./routes/profileRoute.js";
 import sellerRoute from "./routes/sellerRoute.js";
 import reviewRoute from "./routes/reviewRoute.js";
 import dashboardRoute from "./routes/dashboardRoute.js";
+import { scrapeData } from "./utils/scrape.js";
 
 dotenv.config({ path: "./.env" });
 
@@ -49,6 +50,8 @@ app.use((req, res, next) => {
 app.get("/", (req, res) => {
   res.status(200).send("API IS LIVE");
 });
+
+// scrapeData();
 
 app.use("/api/v1/auth", authRoute);
 app.use("/api/v1/profile", profileRoute);

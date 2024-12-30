@@ -67,8 +67,8 @@ const SingleProduct = () => {
 
   return !isLoading && !reviewLoading ? (
     <>
-      <div className="flex flex-col gap-10 p-6 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-10 p-6 max-w-7xl mx-auto w-full">
+        <div className="flex flex-wrap items-center justify-between">
           <h3 className="text-2xl font-semibold text-gray-800">Product</h3>
           <p className="text-gray-600">
             <Link to="/" className="hover:underline">
@@ -81,21 +81,21 @@ const SingleProduct = () => {
             / {data.product.name}
           </p>
         </div>
-        <div className="flex gap-16">
-          <div className="flex-[2] flex flex-col gap-6 items-center">
+        <div className="flex flex-wrap flex-col gap-8 lg:flex-row lg:gap-16">
+          <div className="flex-[2] flex flex-col gap-6 items-center w-full lg:w-auto">
             <div className="flex justify-center w-full">
               <img
                 src={data.product.image.url}
                 alt=""
-                className="object-contain w-full h-auto rounded-md"
+                className="object-contain w-full max-w-sm h-auto rounded-md"
               />
             </div>
           </div>
 
-          <div className="flex-[3] flex flex-col gap-8">
+          <div className="flex-[3] flex flex-col gap-8 w-full lg:w-auto">
             <div className="flex flex-col gap-2">
               <h3 className="text-2xl font-semibold">{data.product.name}</h3>
-              <div className="flex items-center gap-4">
+              <div className="flex flex-wrap items-center gap-4">
                 <h4 className="text-xl font-semibold">₹{data.product.price}</h4>
                 <p className="text-gray-500">
                   MRP{" "}
@@ -141,14 +141,17 @@ const SingleProduct = () => {
               </li>
               <li className="font-semibold">
                 Shipping Fee:{" "}
-                <span className="font-normal">₹{data.product.shippingFee}</span>
+                <span className="font-normal">
+                  {data.product.shippingFee
+                    ? `₹${data.product.shippingFee}`
+                    : "Free"}
+                </span>
               </li>
               <li className="font-semibold">
                 Return: <span className="font-normal">14-day Easy Return</span>
               </li>
             </div>
 
-            {/* Quantity Selector */}
             <div className="flex items-center gap-4">
               <p className="font-semibold">Qty</p>
               <div className="flex items-center gap-2">
@@ -175,8 +178,7 @@ const SingleProduct = () => {
               </div>
             </div>
 
-            {/* Action Buttons */}
-            <div className="flex gap-4">
+            <div className="flex flex-wrap gap-4">
               <button
                 onClick={handleAddToCart}
                 className="bg-gray-800 text-white flex items-center gap-2 py-2 px-6 rounded-md hover:bg-gray-700"
@@ -191,13 +193,13 @@ const SingleProduct = () => {
         </div>
       </div>
 
-      <section className="flex gap-10 p-5">
+      <section className="flex flex-wrap p-6 max-w-7xl mx-auto w-full flex-col-reverse gap-8 lg:flex-row lg:gap-16">
         <div className="flex flex-col gap-5 flex-1">
           <div className="flex justify-between items-center">
             <h4 className="text-lg font-semibold text-gray-800">
               Customer Reviews
             </h4>
-            {role == "Buyer" && <AddReviewDialog productId={productId} />}
+            {role === "Buyer" && <AddReviewDialog productId={productId} />}
           </div>
 
           {reviewData?.stats?.reviews?.length === 0 ? (
@@ -213,7 +215,6 @@ const SingleProduct = () => {
                 >
                   <div className="flex gap-2 items-center">
                     <img
-                      // src="/avatar.png"
                       src={
                         review
                           ? `https://ui-avatars.com/api/?name=${review.userId.name}&background=random`

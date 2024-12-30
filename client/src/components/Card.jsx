@@ -26,7 +26,7 @@ const Card = ({ product }) => {
               {product.name.substring(0, 20)}
             </h4>
             <p className="text-xs md:text-sm text-gray-500 mb-2 md:mb-3">
-              {product.description.substring(0, 65)}...
+              {product.description.substring(0, 62)}...
             </p>
             <div className="border-t border-gray-200 pt-2 md:pt-3 flex justify-between items-center">
               <div className="text-sm md:text-lg font-medium text-gray-800">

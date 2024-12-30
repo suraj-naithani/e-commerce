@@ -15,7 +15,7 @@ const schema = new Schema(
     description: {
       type: String,
       trim: true,
-      required: true,
+      // required: true,
     },
     price: {
       type: Number,
@@ -60,9 +60,9 @@ const schema = new Schema(
         required: true,
       },
     },
-  shippingFee: {
+    shippingFee: {
       type: Number,
-      required: true,
+      // required: true,
       min: [0, "Price cannot be negative"],
     },
     hitCount: {
