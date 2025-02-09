@@ -8,7 +8,7 @@ const data = { list: [] };
 function generateRandomPublicId() {
   return `${crypto.randomUUID()}`;
 }
-
+bhsrtiartl 24 cd 1700
 function generateRandomStock() {
   return Math.floor(Math.random() * (83 - 5 + 1)) + 5;
 }
