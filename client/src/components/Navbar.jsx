@@ -6,21 +6,50 @@ import { userNotExist } from "../redux/reducer/authReducer";
 import toast from "react-hot-toast";
 import { IoCartOutline, IoSearchOutline } from "react-icons/io5";
 import { IoMdHeartEmpty } from "react-icons/io";
+import { useSearchProductQuery } from "../redux/api/productApi";
 
 const Navbar = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const dropdownRef = useRef(null);
-  const cartCount = 3;
-  const wishlistCount = 2;
 
-  const { user } = useSelector((state) => state.authReducer);
+  const [search, setSearch] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
 
-  const login = user;
-  const role = user?.role;
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearchTerm(search);
+    }, 500);
+
+    return () => clearTimeout(handler);
+  }, [search]);
+
+  const {
+    data: searchResults,
+    isLoading,
+    isError,
+  } = useSearchProductQuery(debouncedSearchTerm, {
+    skip: !debouncedSearchTerm,
+  });
+
+  const handleSearchChange = (e) => {
+    setSearch(e.target.value);
+  };
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
+
+  const handleProductClick = (productId) => {
+    navigate(`/product/${productId}`);
+  };
+
+  const dropdownRef = useRef(null);
+  const wishlistCount = 2;
+
+  const { user } = useSelector((state) => state.authReducer);
+  const { cartItems } = useSelector((state) => state.cartReducer);
+  
+  const login = user;
+  const role = user?.role;
 
   const [logoutUser] = useUserLogoutMutation();
 
@@ -65,10 +94,39 @@ const Navbar = () => {
                 type="text"
                 placeholder="Search here"
                 className="w-full px-4 py-2.5 rounded-md bg-gray-100 focus:outline-none focus:ring-2"
+                value={search}
+                onChange={handleSearchChange}
               />
               <button className="absolute right-3 top-1/2 -translate-y-1/2">
                 <IoSearchOutline className="w-5 h-5 text-gray-400" />
               </button>
+              {/* Display search results */}
+              {debouncedSearchTerm && (
+                <div className="absolute bg-white w-full mt-1 rounded-lg shadow-lg z-10">
+                  {isLoading ? (
+                    <div className="p-4 text-gray-500">Loading...</div>
+                  ) : searchResults?.products.length > 0 && !isError ? (
+                    searchResults?.products?.slice(0, 6).map((product) => (
+                      <div
+                        key={product._id}
+                        className="flex items-center p-4 border-b border-gray-200 hover:bg-gray-50 cursor-pointer transition duration-200 ease-in-out rounded-md"
+                        onClick={() => handleProductClick(product._id)}
+                      >
+                        <div className="flex-1">
+                          <p className="text-gray-800 truncate">
+                            {product.name.substr(0, 45)}
+                          </p>
+                        </div>
+                        <div className="ml-4 text-sm text-gray-500">
+                          <p>{product.category}</p>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="p-4 text-gray-500">No results found</div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
@@ -83,14 +141,14 @@ const Navbar = () => {
             <div className="relative">
               <Link to="/cart" className="text-gray-700 hover:text-gray-900">
                 <IoCartOutline className="w-6 h-6" />
-                {cartCount > 0 && (
-                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                    {cartCount}
+                {cartItems.length > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-[#ef4444] text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                    {cartItems.length}
                   </span>
                 )}
               </Link>
             </div>
-            <div className="relative">
+            {/* <div className="relative">
               <Link
                 to="/wishlist"
                 className="text-gray-700 hover:text-gray-900"
@@ -102,7 +160,7 @@ const Navbar = () => {
                   </span>
                 )}
               </Link>
-            </div>
+            </div> */}
             {login ? (
               <div className="relative" ref={dropdownRef}>
                 <button
@@ -110,27 +168,35 @@ const Navbar = () => {
                   className="flex items-center focus:outline-none"
                 >
                   <img
-                    src="./avatar.png"
+                    src={user ? `https://ui-avatars.com/api/?name=${user.name}&background=random` : "./avatar.png"}
                     alt="Profile"
                     className="w-8 h-8 rounded-full"
                   />
                 </button>
                 {isDropdownOpen && (
                   <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
-                    <Link
-                      to="/profile"
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    >
-                      Profile
-                    </Link>
+                    {role == "Buyer" && (
+                      <Link
+                        to="/profile"
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      >
+                        Profile
+                      </Link>
+                    )}
                     {(role == "Admin" || role == "Seller") && (
                       <Link
-                        to="/dashboard"
+                        to="/dashboard/home"
                         className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                       >
                         Dashboard
                       </Link>
                     )}
+                    <Link
+                      to="/orders"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      Order
+                    </Link>
                     <Link
                       to="/setting"
                       className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -203,12 +269,12 @@ const Navbar = () => {
             >
               Cart
             </Link>
-            <Link
+            {/* <Link
               to="wishlist"
               className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"
             >
               Wishlist
-            </Link>
+            </Link> */}
             <Link
               to="/profile"
               className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"

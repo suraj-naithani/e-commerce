@@ -68,10 +68,98 @@ const getCart = async (req, res) => {
   }
 };
 
-const removeFromCart = async (req, res) => {
+const decreaseQuantity = async (req, res) => {
   try {
     const { productId } = req.body;
     const userId = req.user;
+
+    let cart = await Cart.findOne({ userId });
+
+    if (!cart) {
+      return res.status(404).json({
+        success: false,
+        message: "Cart not found",
+      });
+    }
+
+    const itemIndex = cart.items.findIndex(
+      (item) => item.productId.toString() === productId
+    );
+
+    if (itemIndex > -1) {
+      if (cart.items[itemIndex].quantity > 1) {
+        cart.items[itemIndex].quantity -= 1;
+      } else {
+        cart.items.splice(itemIndex, 1);
+      }
+      await cart.save();
+      return res.status(200).json({
+        success: true,
+        message: "Product quantity decreased or removed from cart",
+        cart,
+      });
+    }
+
+    res.status(404).json({
+      success: false,
+      message: "Product not found in cart",
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: "Error decreasing quantity",
+      error,
+    });
+  }
+};
+
+const increaseQuantity = async (req, res) => {
+  try {
+    const { productId } = req.body;
+    const userId = req.user;
+
+    let cart = await Cart.findOne({ userId });
+
+    if (!cart) {
+      return res.status(404).json({
+        success: false,
+        message: "Cart not found",
+      });
+    }
+
+    const itemIndex = cart.items.findIndex(
+      (item) => item.productId.toString() === productId
+    );
+
+    if (itemIndex > -1) {
+      cart.items[itemIndex].quantity += 1;
+      await cart.save();
+      return res.status(200).json({
+        success: true,
+        message: "Product quantity increased",
+        cart,
+      });
+    }
+
+    res.status(404).json({
+      success: false,
+      message: "Product not found in cart",
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: "Error increasing quantity",
+      error,
+    });
+  }
+};
+
+const removeFromCart = async (req, res) => {
+  try {
+    const { productId } = req.body; 
+    const userId = req.user; 
 
     let cart = await Cart.findOne({ userId });
 
@@ -110,4 +198,10 @@ const removeFromCart = async (req, res) => {
   }
 };
 
-export { addToCart, getCart, removeFromCart };
+export {
+  addToCart,
+  getCart,
+  decreaseQuantity,
+  increaseQuantity,
+  removeFromCart,
+};

@@ -4,16 +4,19 @@ import {
   createReview,
   deleteReview,
   getProductReviews,
+  getMyProductReview
 } from "../controllers/reviewController.js";
 
 const app = express.Router();
 
-app.get("/:productId", getProductReviews);
-
 app.use(isAuthenticated);
 
-app.post("/addReview", createReview);
+app.post("/postReview/:userId", createReview);
 
-app.delete("/:reviewId", deleteReview);
+app.get("/getReview/:productId", getProductReviews);
+
+app.get("/getMyReview", getMyProductReview);
+
+app.delete("/deleteReview/:reviewId", deleteReview);
 
 export default app;

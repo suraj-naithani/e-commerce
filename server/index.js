@@ -2,7 +2,7 @@ import { v2 as cloudinary } from "cloudinary";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import dotenv from "dotenv";
-import express from "express";
+import express, { urlencoded } from "express";
 import morgan from "morgan";
 import Stripe from "stripe";
 import { corsOptions } from "./constants/config.js";
@@ -16,6 +16,7 @@ import profileRoute from "./routes/profileRoute.js";
 import sellerRoute from "./routes/sellerRoute.js";
 import reviewRoute from "./routes/reviewRoute.js";
 import dashboardRoute from "./routes/dashboardRoute.js";
+import { scrapeData } from "./utils/scrape.js";
 
 dotenv.config({ path: "./.env" });
 
@@ -38,6 +39,7 @@ app.use(morgan("dev"));
 app.use(express.json());
 app.use(cookieParser());
 app.use(cors(corsOptions));
+app.use(express.urlencoded({ extended: true }));
 
 app.use((req, res, next) => {
   res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
@@ -48,6 +50,8 @@ app.use((req, res, next) => {
 app.get("/", (req, res) => {
   res.status(200).send("API IS LIVE");
 });
+
+// scrapeData();
 
 app.use("/api/v1/auth", authRoute);
 app.use("/api/v1/profile", profileRoute);

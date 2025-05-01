@@ -7,7 +7,7 @@ const categories = [
     category: "Electronics",
   },
   {
-    title: "Summer Fashion Trends",
+    title: "Fashion Trends",
     description: "Discover the hottest styles for the season.",
     image:
       "https://images.unsplash.com/photo-1445205170230-053b83016050?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80",
@@ -36,7 +36,7 @@ const categories = [
   },
   {
     title: "Discover More",
-    description: "Find unique deals and products in other categories.",
+    description: "Find unique deals other categories.",
     image:
       "https://images.unsplash.com/photo-1498603911539-01ce6c9ad8f5?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
     category: "Other",

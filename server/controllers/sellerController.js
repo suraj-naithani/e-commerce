@@ -8,7 +8,16 @@ import {
 const createProduct = async (req, res) => {
   try {
     const userId = req.user;
-    const { name, description, price, category, stock } = req.body;
+    const {
+      name,
+      description,
+      price,
+      originalPrice,
+      discountPercentage,
+      category,
+      stock,
+      shippingFee,
+    } = req.body;
     const file = req.file;
 
     if (!file) {
@@ -18,10 +27,31 @@ const createProduct = async (req, res) => {
       });
     }
 
-    if (!name || !description || !price || !category) {
+    if (
+      !name ||
+      !description ||
+      !price ||
+      !originalPrice ||
+      !discountPercentage ||
+      !category ||
+      !shippingFee
+    ) {
       return res.status(400).json({
         success: false,
         message: "All required fields must be provided",
+      });
+    }
+
+    if (
+      price < 0 ||
+      originalPrice < 0 ||
+      discountPercentage < 0 ||
+      shippingFee < 0
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Price, original price, discount percentage, and shipping fee must not be negative",
       });
     }
 
@@ -36,9 +66,12 @@ const createProduct = async (req, res) => {
       name,
       description,
       price,
+      originalPrice,
+      discountPercentage,
       category,
       stock: stock || 0,
       image,
+      shippingFee,
     });
 
     res.status(201).json({
@@ -100,17 +133,19 @@ const product = async (req, res) => {
 const updateProduct = async (req, res) => {
   try {
     const productId = req.params.id;
-    const { name, description, price, category, stock } = req.body;
+    const {
+      name,
+      description,
+      price,
+      originalPrice,
+      discountPercentage,
+      category,
+      stock,
+      shippingFee,
+    } = req.body;
     const file = req.file;
 
     const product = await Product.findById(productId);
-
-    if (req.user != product.seller) {
-      return res.status(403).json({
-        success: false,
-        message: "Unauthorized to update this product",
-      });
-    }
 
     if (!product) {
       return res.status(404).json({
@@ -119,12 +154,35 @@ const updateProduct = async (req, res) => {
       });
     }
 
+    if (req.user != product.seller) {
+      return res.status(403).json({
+        success: false,
+        message: "Unauthorized to update this product",
+      });
+    }
+
+    if (
+      price < 0 ||
+      originalPrice < 0 ||
+      discountPercentage < 0 ||
+      shippingFee < 0
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Price, original price, discount percentage, and shipping fee must not be negative",
+      });
+    }
+
     const updates = {
       name: name || product.name,
       description: description || product.description,
       price: price || product.price,
+      originalPrice: originalPrice || product.originalPrice,
+      discountPercentage: discountPercentage || product.discountPercentage,
       category: category || product.category,
       stock: stock || product.stock,
+      shippingFee: shippingFee || product.shippingFee,
     };
 
     let image = product.image;
@@ -142,9 +200,8 @@ const updateProduct = async (req, res) => {
       (key) => updates[key] !== undefined && updates[key] !== product[key]
     );
 
-    Object.assign(product, updates);
-
     if (hasChanges) {
+      Object.assign(product, updates);
       await product.save();
       return res.status(200).json({
         success: true,
@@ -154,7 +211,7 @@ const updateProduct = async (req, res) => {
     } else {
       return res.status(200).json({
         success: false,
-        message: "No changes",
+        message: "No changes made to the product",
       });
     }
   } catch (error) {

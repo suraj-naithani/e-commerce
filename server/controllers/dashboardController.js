@@ -32,8 +32,6 @@ const sellerDashboard = async (req, res) => {
       todayEarnings,
       weeklyEarning,
       monthlyEarnings,
-      products,
-      allOrder,
     ] = await Promise.all([
       Order.countDocuments({
         sellerId: sellerId,
@@ -114,10 +112,6 @@ const sellerDashboard = async (req, res) => {
           },
         },
       ]),
-
-      Product.find({ seller: sellerId }),
-
-      Order.find({ sellerId: sellerId }),
     ]);
 
     const totalEarning =
@@ -151,8 +145,6 @@ const sellerDashboard = async (req, res) => {
       todayEarning,
       weeklyDayEarnings: weeklyEarningsArray,
       monthlyEarnings: monthlyEarningsArray,
-      products,
-      allOrder,
     };
 
     return res.status(201).json({
@@ -169,7 +161,7 @@ const sellerDashboard = async (req, res) => {
     });
   }
 };
-// find the abandoned carts product by just check if the product is in cart for more than one month then show that product and product will be multiple copy but userId is different so add only single product. create it inside promise
+
 const adminDashboard = async (req, res) => {
   try {
     const lastSixDays = Array.from({ length: 7 }).map((_, i) =>
@@ -195,8 +187,6 @@ const adminDashboard = async (req, res) => {
       products,
       allOrder,
       categories,
-      monthlyBuyerAccounts,
-      monthlySellerAccounts,
       abandonedProducts,
     ] = await Promise.all([
       Product.countDocuments(),
@@ -261,51 +251,13 @@ const adminDashboard = async (req, res) => {
         },
       ]),
 
-      Product.find(),
+      Product.find().populate("seller", "name email phone address"),
 
-      Order.find(),
+      Order.find()
+        .populate("sellerId", "name email phone address")
+        .populate("user", "name email phone address"),
 
       Product.distinct("category"),
-
-      User.aggregate([
-        {
-          $match: {
-            role: "Buyer",
-            createdAt: {
-              $gte: moment().subtract(11, "months").startOf("month").toDate(),
-            },
-          },
-        },
-        {
-          $group: {
-            _id: {
-              month: { $month: "$createdAt" },
-              year: { $year: "$createdAt" },
-            },
-            count: { $sum: 1 },
-          },
-        },
-      ]),
-
-      User.aggregate([
-        {
-          $match: {
-            role: "Seller",
-            createdAt: {
-              $gte: moment().subtract(11, "months").startOf("month").toDate(),
-            },
-          },
-        },
-        {
-          $group: {
-            _id: {
-              month: { $month: "$createdAt" },
-              year: { $year: "$createdAt" },
-            },
-            count: { $sum: 1 },
-          },
-        },
-      ]),
 
       Cart.aggregate([
         {
@@ -358,20 +310,6 @@ const adminDashboard = async (req, res) => {
       return earning ? earning.totalAmount : 0;
     });
 
-    const monthlyBuyerAccountsArray = last12Months.map((month) => {
-      const buyer = monthlyBuyerAccounts.find(
-        (e) => e._id.year === month.year() && e._id.month === month.month() + 1
-      );
-      return buyer ? buyer.count : 0;
-    });
-
-    const monthlySellerAccountsArray = last12Months.map((month) => {
-      const seller = monthlySellerAccounts.find(
-        (e) => e._id.year === month.year() && e._id.month === month.month() + 1
-      );
-      return seller ? seller.count : 0;
-    });
-
     const orderCounts = allOrder.reduce((acc, order) => {
       const productId = order.productId.toString();
       acc[productId] = (acc[productId] || 0) + 1;
@@ -401,8 +339,6 @@ const adminDashboard = async (req, res) => {
       products: productsWithStats,
       allOrder,
       categories,
-      monthlyBuyerAccounts: monthlyBuyerAccountsArray,
-      monthlySellerAccounts: monthlySellerAccountsArray,
       abandonedProducts,
     };
 

@@ -1,5 +1,9 @@
+import { hash, hashSync } from "bcrypt";
 import { User } from "../model/user.js";
-import { hashSync } from "bcrypt";
+import { Cart } from "../model/cart.js";
+import { Order } from "../model/order.js";
+import { Product } from "../model/product.js";
+import { Review } from "../model/review.js";
 
 const getMyProfile = async (req, res) => {
   try {
@@ -25,16 +29,7 @@ const updateProfile = async (req, res) => {
     const userId = req.user;
     const { name, email, phone, address, password } = req.body;
 
-    const user = await User.findById(userId);
-
-    if (!user) {
-      return res
-        .status(404)
-        .send({ success: false, message: "User not found" });
-    }
-
     const emailExist = await User.findOne({ email, _id: { $ne: userId } });
-
     if (emailExist) {
       return res.status(400).json({
         success: false,
@@ -43,7 +38,6 @@ const updateProfile = async (req, res) => {
     }
 
     const phoneExist = await User.findOne({ phone, _id: { $ne: userId } });
-
     if (phoneExist) {
       return res.status(400).json({
         success: false,
@@ -51,46 +45,80 @@ const updateProfile = async (req, res) => {
       });
     }
 
-    if (password) {
-      await hashSync(password, 10);
-    }
-
     const updates = {
-      name: name || user.name,
-      phone: phone || user.phone,
-      email: email || user.email,
-      address: address || user.address,
-      password: password,
+      name,
+      email,
+      phone,
+      address,
     };
 
-    const hasChanges = Object.keys(updates).some(
-      (key) => updates[key] !== user[key]
-    );
-
-    if (!hasChanges) {
-      return res.status(200).json({
-        success: false,
-        message: "No changes",
-      });
+    if (password && password.trim()) {
+      updates.password = await hash(password, 10);
     }
 
-    Object.assign(user, updates);
+    Object.keys(updates).forEach((key) => {
+      if (!updates[key]) delete updates[key];
+    });
 
-    await user.save();
+    const updatedUser = await User.findByIdAndUpdate(userId, updates, {
+      new: true,
+      runValidators: true,
+    });
+
+    if (!updatedUser) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+    }
 
     return res.status(200).json({
       success: true,
       message: "User updated successfully",
-      user,
+      user: updatedUser,
     });
   } catch (error) {
-    console.log(error);
+    console.error("Error in updateProfile:", error);
     return res.status(500).json({
       success: false,
-      message: "Error in update API",
+      message: "Error updating profile",
       error,
     });
   }
 };
 
-export { getMyProfile, updateProfile };
+const deleteMyProfile = async (req, res) => {
+  try {
+    const userId = req.user;
+
+    await Order.deleteMany({ user: userId });
+
+    await Cart.deleteOne({ userId });
+
+    const userProducts = await Product.find({ seller: userId });
+    for (const product of userProducts) {
+      await Review.deleteMany({ productId: product._id });
+    }
+    await Product.deleteMany({ seller: userId });
+
+    await Review.deleteMany({ userId });
+
+    await User.findByIdAndDelete(userId);
+
+    res.status(200).json({
+      success: true,
+      message:
+        "Your profile and all related data have been deleted successfully.",
+    });
+  } catch (error) {
+    console.error("Error deleting profile:", error);
+    res.status(500).json({
+      success: false,
+      message:
+        "An error occurred while deleting your profile. Please try again later.",
+    });
+  }
+};
+
+export default deleteMyProfile;
+
+export { deleteMyProfile, getMyProfile, updateProfile };
