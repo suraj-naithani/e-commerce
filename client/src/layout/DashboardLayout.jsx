@@ -1,6 +1,6 @@
 import { useSelector } from "react-redux";
 import { Outlet } from "react-router-dom";
-import Menu from "../components/Dashboard/Menu";
+import Menu from "../components/dashboard/Menu";
 import {
   useGetAdminDashboardDataQuery,
   useGetSellerDashboardDataQuery,
