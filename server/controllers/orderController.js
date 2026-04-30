@@ -55,12 +55,12 @@ const newOrder = async (req, res) => {
       orderItems,
     });
 
-    await sendEmail({
+    sendEmail({
       to: user.email,
       subject: emailSubject,
       text,
       html,
-    });
+    }).catch((err) => console.error("Order confirmation email failed:", err));
 
     return res
       .status(201)
@@ -169,12 +169,12 @@ const processOrder = async (req, res) => {
         });
       }
 
-      await sendEmail({
+      sendEmail({
         to: recipientEmail,
         subject: emailSubject,
         text,
         html,
-      });
+      }).catch((err) => console.error("Order status email failed:", err));
     }
 
     return res.status(200).json({
