@@ -8,7 +8,7 @@ import { useGetSingleProductQuery } from "../redux/api/productApi";
 import toast from "react-hot-toast";
 import { useDispatch, useSelector } from "react-redux";
 import { addToCart } from "../redux/reducer/cartReducer";
-import { useGetReviewsQuery } from "../redux/api/reviewAPi";
+import { useGetReviewsQuery } from "../redux/api/reviewApi";
 import moment from "moment";
 import AddReviewDialog from "../components/dialog/AddReviewDialog";
 
