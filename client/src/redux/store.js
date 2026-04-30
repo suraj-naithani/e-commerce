@@ -10,8 +10,8 @@ import { productApi } from "./api/productApi";
 import { cartApi } from "./api/cartApi";
 import { cartReducer } from "./reducer/cartReducer";
 import { paymentApi } from "./api/paymentApi";
-import { orderApi } from "./api/orderAPI";
-import { reviewApi } from "./api/reviewAPi";
+import { orderApi } from "./api/orderApi";
+import { reviewApi } from "./api/reviewApi";
 
 const store = configureStore({
   reducer: {
