@@ -1,6 +1,10 @@
 import mongoose from "mongoose";
 import { Order } from "../model/order.js";
 import { User } from "../model/user.js";
+import {
+  getOrderConfirmationEmailTemplate,
+  getOrderStatusEmailTemplate,
+} from "../utils/email.js";
 import { reduceStock, sendEmail } from "../utils/features.js";
 import { stripe } from "../index.js";
 
@@ -45,35 +49,17 @@ const newOrder = async (req, res) => {
     await reduceStock(orderItems);
 
     const emailSubject = `Your Order Confirmation - Order #${order._id}`;
-    const emailBody = `
-    Hi,
-
-    Thank you for shopping with us! Your order has been confirmed and is now being processed.
-
-    **Order Details**
-    Address: ${shippingInfo.address}, ${shippingInfo.city}, ${
-      shippingInfo.state
-    }, ${shippingInfo.country} - ${shippingInfo.pinCode}
-    Total: ₹${total.toLocaleString()}
-
-    **Order Summary**
-    ${orderItems.name} x ${orderItems.quantity} = ${
-      orderItems.price * orderItems.quantity
-    }
-
-    If you have any questions, contact our support team.
-
-    Regards,
-    Your XYZ`;
+    const { text, html } = getOrderConfirmationEmailTemplate({
+      shippingInfo,
+      total,
+      orderItems,
+    });
 
     await sendEmail({
       to: user.email,
       subject: emailSubject,
-      text: emailBody,
-      html: `<div style="font-family: Arial, sans-serif;">${emailBody.replace(
-        /\n/g,
-        "<br>"
-      )}</div>`,
+      text,
+      html,
     });
 
     return res
@@ -116,7 +102,7 @@ const allOrders = async (req, res) => {
 const getSingleOrder = async (req, res) => {
   try {
     const orderId = new mongoose.Types.ObjectId(req.params.id);
-    const order = await Order.findById(orderId);
+    const order = await Order.findById(orderId).populate("user", "email");
     if (!order) {
       return res.status(404).json({
         success: false,
@@ -135,7 +121,7 @@ const processOrder = async (req, res) => {
   try {
     const orderId = new mongoose.Types.ObjectId(req.params.id);
 
-    const order = await Order.findById(orderId);
+    const order = await Order.findById(orderId).populate("user", "email");
     if (!order) {
       return res.status(404).json({
         success: false,
@@ -164,35 +150,30 @@ const processOrder = async (req, res) => {
 
     if (nextStatus === "Shipped" || nextStatus === "Delivered") {
       const emailSubject = `Your Order has been ${nextStatus}`;
-      const emailBody = `
-        Hi,
+      const { text, html } = getOrderStatusEmailTemplate({
+        orderId,
+        status: nextStatus,
+        shippingInfo: order.shippingInfo,
+        total: order.total,
+        orderItems: order.orderItems,
+      });
 
-        Your order with Order ID: ${orderId} has been ${nextStatus}. We're excited to update you on the progress of your purchase!
+      const recipientEmail =
+        order?.user?.email ||
+        (await User.findById(order.user).select("email"))?.email;
 
-        **Order Details**
-        - Address: ${order.shippingInfo.address}, ${order.shippingInfo.city}, ${
-        order.shippingInfo.state
-      }, ${order.shippingInfo.country} - ${order.shippingInfo.pinCode}
-        - Total: ₹${order.total.toLocaleString()}
-
-        **Order Summary**
-       ${order.orderItems.name} x ${order.orderItems.quantity} = ${
-        order.orderItems.price * order.orderItems.quantity
+      if (!recipientEmail) {
+        return res.status(400).json({
+          success: false,
+          message: "Customer email not found for this order",
+        });
       }
 
-        If you have any questions or need assistance, feel free to contact our support team.
-
-        Regards,
-        Your XYZ`;
-
       await sendEmail({
-        to: process.env.MY_GMAIL_ID,
+        to: recipientEmail,
         subject: emailSubject,
-        text: emailBody,
-        html: `<div style="font-family: Arial, sans-serif;">${emailBody.replace(
-          /\n/g,
-          "<br>"
-        )}</div>`,
+        text,
+        html,
       });
     }
 
@@ -230,7 +211,8 @@ const deleteOrder = async (req, res) => {
 
 const createPaymentIntent = async (req, res, next) => {
   try {
-    const { amount } = req.body;
+    const { amount, description, customerName, customerEmail, shippingInfo } =
+      req.body;
 
     if (!amount) {
       return res
@@ -238,9 +220,45 @@ const createPaymentIntent = async (req, res, next) => {
         .json({ success: true, message: "Please enter amount" });
     }
 
+    if (
+      !customerName ||
+      !shippingInfo?.address ||
+      !shippingInfo?.city ||
+      !shippingInfo?.state ||
+      !shippingInfo?.country ||
+      !shippingInfo?.pinCode
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Customer name and complete address are required for India export payments",
+      });
+    }
+
+    const countryCode =
+      shippingInfo.country?.toLowerCase() === "india"
+        ? "IN"
+        : shippingInfo.country;
+
     const paymentIntent = await stripe.paymentIntents.create({
       amount: Number(amount) * 100,
       currency: "inr",
+      description:
+        description?.trim() || "E-commerce order payment (India export)",
+      receipt_email: customerEmail || undefined,
+      shipping: {
+        name: customerName,
+        address: {
+          line1: shippingInfo.address,
+          city: shippingInfo.city,
+          state: shippingInfo.state,
+          postal_code: String(shippingInfo.pinCode),
+          country: countryCode,
+        },
+      },
+      metadata: {
+        source: "web_checkout",
+      },
     });
 
     return res

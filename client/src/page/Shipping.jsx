@@ -12,6 +12,7 @@ const Shipping = () => {
   const dispatch = useDispatch();
 
   const { cartItems, total } = useSelector((state) => state.cartReducer);
+  const { user } = useSelector((state) => state.authReducer);
 
   const [createPaymentIntent] = useCreatePaymentIntentMutation();
 
@@ -30,7 +31,15 @@ const Shipping = () => {
   const submitHandler = async (e) => {
     e.preventDefault();
     try {
-      const data = await createPaymentIntent({ amount: total }).unwrap();
+      const paymentDescription =
+        cartItems?.[0]?.productId?.name || "E-commerce order payment";
+      const data = await createPaymentIntent({
+        amount: total,
+        description: `Order payment - ${paymentDescription}`,
+        customerName: user?.name,
+        customerEmail: user?.email,
+        shippingInfo,
+      }).unwrap();
       dispatch(saveShippingInfo(shippingInfo));
       navigate("/pay", {
         state: data.clientSecret,

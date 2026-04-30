@@ -6,15 +6,10 @@ import { v4 as uuid } from "uuid";
 import { getBase64 } from "../lib/helper.js";
 import { Product } from "../model/product.js";
 
-const connectDB = (uri) => {
-  mongoose
-    .connect(uri, { dbName: "E-comm" })
-    .then((data) => {
-      console.log(`connect to DB: ${data.connection.host}`);
-    })
-    .catch((error) => {
-      throw error;
-    });
+const connectDB = async (uri) => {
+  const data = await mongoose.connect(uri, { dbName: "E-comm" });
+  console.log(`connect to DB: ${data.connection.host}`);
+  return data;
 };
 
 const uploadFileToCloudinary = async (files = []) => {
@@ -96,7 +91,7 @@ const reduceStock = async (orderItems) => {
   }
 };
 
-const sendEmail = async ({ to, subject, text }) => {
+const sendEmail = async ({ to, subject, text, html }) => {
   try {
     const transporter = nodemailer.createTransport({
       host: "smtp.gmail.com",
@@ -114,6 +109,7 @@ const sendEmail = async ({ to, subject, text }) => {
       to: to,
       subject: subject,
       text: text,
+      html: html || undefined,
     };
 
     await transporter.sendMail(mailOptions);
