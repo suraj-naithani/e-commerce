@@ -2,7 +2,7 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { FaStar } from "react-icons/fa";
 import { IoClose } from "react-icons/io5";
-import { useCreateReviewMutation } from "../../redux/api/reviewAPi";
+import { useCreateReviewMutation } from "../../redux/api/reviewApi";
 
 const AddReviewDialog = ({ productId }) => {
   const [isOpen, setIsOpen] = useState(false);

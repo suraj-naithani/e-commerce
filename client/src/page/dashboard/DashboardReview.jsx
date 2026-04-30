@@ -2,7 +2,7 @@ import moment from "moment";
 import toast from "react-hot-toast";
 import { FaStar } from "react-icons/fa";
 import { MdDeleteOutline } from "react-icons/md";
-import { useDeleteReviewMutation, useGetMyProductReviewsQuery } from "../../redux/api/reviewAPi";
+import { useDeleteReviewMutation, useGetMyProductReviewsQuery } from "../../redux/api/reviewApi";
 
 const DashboardReview = () => {
   const { data } = useGetMyProductReviewsQuery();
