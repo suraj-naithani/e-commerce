@@ -9,7 +9,7 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { useDispatch, useSelector } from "react-redux";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
-import { useNewOrderMutation } from "../redux/api/orderAPI";
+import { useNewOrderMutation } from "../redux/api/orderApi";
 import { clearCart } from "../redux/reducer/cartReducer";
 import { useRemoveFromCartMutation } from "../redux/api/cartApi";
 
